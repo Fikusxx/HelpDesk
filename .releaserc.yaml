@@ -1,0 +1,44 @@
+branches: 
+  - name: dev
+tagFormat: v${version}
+plugins: 
+  - '@semantic-release/commit-analyzer'
+  - '@semantic-release/release-notes-generator'
+  - '@semantic-release/gitlab'
+ci: true
+verifyConditions:
+  - '@semantic-release/gitlab'
+analyzeCommits:
+  - path: '@semantic-release/commit-analyzer'
+    # Determine the type of release by analyzing commits with conventional-changelog
+    releaseRules:
+      - breaking: true
+        release: major
+      - type: build     # Changes that affect the build system or external dependencies
+        release: patch
+      - type: ci        # Changes to our CI configuration files and scripts
+        release: false
+      - type: docs      # Documentation only changes
+        release: false
+      - type: feat      # A new feature
+        release: minor
+      - type: fix       # A bug fix
+        release: patch
+      - type: perf      # A code change that improves performance
+        release: patch
+      - type: refactor  # A code change that neither fixes a bug nor adds a feature
+        release: false
+      - type: revert    # Reverts a previous commit
+        release: patch
+      - type: test      # Adding missing tests or correcting existing tests
+        release: false
+publish:
+  - path: '@semantic-release/gitlab'
+    gitlabUrl: https://git.setclapp.com
+    assets:
+      - url: https://registry.setclapp.com/feeds/mmx/library%2Fbo.admin-tickets-dev#versions
+        label: 'DEV Docker image'
+        type: image
+      - url: https://registry.setclapp.com/feeds/mmx/library%2Fbo.admin-tickets-stage#versions
+        label: 'STAGE Docker image'
+        type: image

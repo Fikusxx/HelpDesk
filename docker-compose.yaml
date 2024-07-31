@@ -1,0 +1,35 @@
+services:
+  bo.admin-tickets:
+    container_name: ${CI_ENVIRONMENT_NAME}_bo.admin-tickets
+    build: .
+    image: ${PRIVATE_REGISTRY_URL}library/bo.admin-tickets-${CI_ENVIRONMENT_NAME}:${LATEST_GIT_TAG}
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - EventStoreOptions__ConnectionString=${DB_CONNECTION}
+      - MessageBrokerOptions__Uri=${BROKER_URL}
+      - MessageBrokerOptions__Username=${BROKER_USERNAME}
+      - MessageBrokerOptions__Password=${BROKER_PASSWORD}
+    restart: always
+    ports:
+      - 8068:8080
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.bo-tickets.rule=Host(`devammis-api.fiu.az`) && PathPrefix(`/api/v1/admin-tickets`) && (HeadersRegexp(`Referer`, `${FRONT_URL}`) || HeadersRegexp(`Referer`, `${FRONT_ADMIN_URL}`))
+      - traefik.http.routers.bo-tickets.entrypoints=websecure
+      - traefik.http.routers.bo-tickets.service=bo-tickets
+      - traefik.http.services.bo-tickets.loadbalancer.server.port=8080
+      - traefik.http.services.bo-tickets.loadbalancer.passhostheader=true
+      - traefik.http.middlewares.bo-tickets.stripprefix.prefixes=/api/v1/admin-tickets
+      - traefik.http.routers.bo-tickets.middlewares=bo-tickets
+      - traefik.http.routers.bo-tickets.tls=true
+    networks: 
+      bo.mmx.net:
+        ipv4_address: 172.16.221.5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+networks:
+  bo.mmx.net:
+    external: true
